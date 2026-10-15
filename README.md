@@ -3,6 +3,8 @@
 Landing page y tienda de chocolate artesanal ecuatoriano, hecha con React + Vite.
 La mascota, **Cacaíto**, es una tableta de chocolate con estilo de dibujo animado de los años 30.
 
+📄 **Documentación completa:** [DOCUMENTACION.md](DOCUMENTACION.md)
+
 ## Páginas
 
 - **Inicio**: portada animada, "La cinta del taller" (los chocolates avanzan mientras bajas), selector de intensidad de cacao, el proceso como un recibo que se imprime con el scroll y la carta con precios.
