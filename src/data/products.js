@@ -168,4 +168,32 @@ export const PRODUCTOS = [
   },
 ]
 
+// Fotos de producto (referenciales, generadas con IA) en public/img/productos/<id>-480|960.webp.
+// fondo = color del fondo de la foto, para el marcador mientras carga.
+const FOTOS = {
+  'arriba-70': { fondo: 'yellow', alt: 'Tableta Arriba 70% con envoltura roja abierta, junto a flores de jazmín y avellanas' },
+  'esmeraldas-85': { fondo: 'yellow', alt: 'Tableta Esmeraldas 85% con envoltura café, junto a frambuesas y grosellas' },
+  'napo-100': { fondo: 'yellow', alt: 'Tableta Napo 100% con envoltura café, junto a granos de cacao tostados' },
+  'leche-panela': { fondo: 'red', alt: 'Tableta de leche y panela 45% con envoltura amarilla, junto a trozos de panela' },
+  'leche-60': { fondo: 'yellow', alt: 'Tableta de leche oscuro 60% con envoltura crema, junto a una cuchara de miel' },
+  'blanco-uvilla': { fondo: 'red', alt: 'Tableta de chocolate blanco con uvilla, junto a uvillas frescas' },
+  'cafe-loja': { fondo: 'yellow', alt: 'Tableta 70% con café de Loja, junto a granos de café tostado' },
+  'sal-santa-elena': { fondo: 'yellow', alt: 'Tableta 60% con sal de mar, con escamas de sal sobre el chocolate' },
+  'bombones-9': { fondo: 'red', alt: 'Caja amarilla abierta con nueve bombones surtidos' },
+  nibs: { fondo: 'yellow', alt: 'Bolsa de nibs de cacao junto a nibs y granos de cacao' },
+  'taza-canela': { fondo: 'yellow', alt: 'Bolsa de chocolate de taza junto a bolitas de chocolate, canela y una taza caliente' },
+}
+PRODUCTOS.forEach((p) => Object.assign(p, FOTOS[p.id]))
+
+export const imgSrc = (p, w = 960) => `/img/productos/${p.id}-${w}.webp`
+
 export const porId = (id) => PRODUCTOS.find((p) => p.id === id)
+
+// Primero los de la misma categoría, luego los de porcentaje de cacao más parecido.
+export function relacionados(p, n = 3) {
+  return PRODUCTOS.filter((o) => o.id !== p.id)
+    .map((o) => ({ o, d: (o.cat === p.cat ? 0 : 100) + Math.abs(o.pct - p.pct) }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, n)
+    .map(({ o }) => o)
+}

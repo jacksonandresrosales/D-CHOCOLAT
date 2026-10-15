@@ -1,17 +1,23 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'motion/react'
 import Mascot from '../components/Mascot'
-import ProductArt from '../components/ProductArt'
+import ProductImage from '../components/ProductImage'
+import AddToCart from '../components/AddToCart'
+import { ease } from '../components/anim'
 import { useCart } from '../context/CartContext'
-import { ENVIO, usd, waLink } from '../config'
+import { PRODUCTOS } from '../data/products'
+import { ENVIO, ENVIO_GRATIS, usd, waLink } from '../config'
 
 export default function Carrito() {
   const { lineas, subtotal, fijar, vaciar, cantidad } = useCart()
   const [entrega, setEntrega] = useState('domicilio')
   const [f, setF] = useState({ nombre: '', ciudad: '', direccion: '', notas: '' })
   const [err, setErr] = useState({})
+  const [confirmar, setConfirmar] = useState(false)
 
-  const envio = entrega === 'domicilio' ? ENVIO : 0
+  const falta = Math.max(0, ENVIO_GRATIS - subtotal)
+  const envio = entrega === 'domicilio' && falta > 0 ? ENVIO : 0
   const total = subtotal + envio
 
   if (!lineas.length) {
@@ -27,6 +33,12 @@ export default function Carrito() {
     )
   }
 
+  // Sugerencias para completar el pedido: los más baratos que aún no están en el carrito.
+  const enCarrito = new Set(lineas.map((l) => l.producto.id))
+  const extras = PRODUCTOS.filter((p) => !enCarrito.has(p.id))
+    .sort((a, b) => a.precio - b.precio)
+    .slice(0, 3)
+
   const pedir = (e) => {
     e.preventDefault()
     const er = {}
@@ -41,7 +53,7 @@ export default function Carrito() {
       `Hola D'CHOCOLAT, soy ${f.nombre.trim()} y quiero pedir:`,
       ...lineas.map((l) => `• ${l.qty} × ${l.producto.nombre} (${usd(l.qty * l.producto.precio)})`),
       `Subtotal: ${usd(subtotal)}`,
-      entrega === 'domicilio' ? `Envío: ${usd(envio)}` : 'Retiro en el taller',
+      entrega === 'domicilio' ? `Envío: ${envio ? usd(envio) : 'gratis'}` : 'Retiro en el taller',
       `Total: ${usd(total)}`,
       entrega === 'domicilio' ? `Entregar en: ${f.direccion.trim()}, ${f.ciudad.trim()}` : '',
       f.notas.trim() ? `Notas: ${f.notas.trim()}` : '',
@@ -81,38 +93,100 @@ export default function Carrito() {
 
       <div className="cart">
         <section aria-label="Productos en el carrito">
+          <div className="freeship" aria-live="polite">
+            <p>
+              {falta > 0 ? (
+                <>
+                  Te faltan <strong>{usd(falta)}</strong> para el envío gratis.
+                </>
+              ) : (
+                <strong>¡Tu envío a domicilio es gratis!</strong>
+              )}
+            </p>
+            <div className="freeship__bar" aria-hidden="true">
+              <motion.span animate={{ scaleX: Math.min(1, subtotal / ENVIO_GRATIS) }} transition={{ duration: 0.6, ease }} />
+            </div>
+          </div>
+
           <ul className="cart__list">
-            {lineas.map(({ producto: p, qty }) => (
-              <li key={p.id} className="line">
-                <ProductArt p={p} className="line__art" />
-                <div className="line__info">
-                  <h2>{p.nombre}</h2>
-                  <p>
-                    {usd(p.precio)} c/u · {p.peso}
-                  </p>
-                  <button className="linkbtn" onClick={() => fijar(p.id, 0)}>
-                    Quitar
-                  </button>
-                </div>
-                <div className="stepper" role="group" aria-label={`Cantidad de ${p.nombre}`}>
-                  <button onClick={() => fijar(p.id, qty - 1)} aria-label="Quitar uno">
-                    −
-                  </button>
-                  <span aria-live="polite">{qty}</span>
-                  <button onClick={() => fijar(p.id, qty + 1)} aria-label="Añadir uno">
-                    +
-                  </button>
-                </div>
-                <span className="line__sum">{usd(qty * p.precio)}</span>
-              </li>
-            ))}
+            <AnimatePresence initial={false}>
+              {lineas.map(({ producto: p, qty }) => (
+                <motion.li
+                  key={p.id}
+                  className="line"
+                  layout
+                  initial={{ opacity: 0, y: -12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -40, transition: { duration: 0.25 } }}
+                  transition={{ duration: 0.35, ease }}
+                >
+                  <Link to={`/chocolates/${p.id}`} className="line__art" tabIndex={-1} aria-hidden="true">
+                    <ProductImage p={p} sizes="80px" />
+                  </Link>
+                  <div className="line__info">
+                    <h2>
+                      <Link to={`/chocolates/${p.id}`}>{p.nombre}</Link>
+                    </h2>
+                    <p>
+                      {usd(p.precio)} c/u · {p.peso}
+                    </p>
+                    <button className="linkbtn" onClick={() => fijar(p.id, 0)}>
+                      Quitar
+                    </button>
+                  </div>
+                  <div className="stepper" role="group" aria-label={`Cantidad de ${p.nombre}`}>
+                    <button onClick={() => fijar(p.id, qty - 1)} aria-label={qty === 1 ? `Quitar ${p.nombre}` : 'Quitar uno'}>
+                      −
+                    </button>
+                    <span aria-live="polite">{qty}</span>
+                    <button onClick={() => fijar(p.id, qty + 1)} aria-label="Añadir uno">
+                      +
+                    </button>
+                  </div>
+                  <span className="line__sum">{usd(qty * p.precio)}</span>
+                </motion.li>
+              ))}
+            </AnimatePresence>
           </ul>
+
           <div className="cart__more">
             <Link to="/chocolates">Seguir comprando</Link>
-            <button className="linkbtn" onClick={() => window.confirm('¿Vaciar el carrito?') && vaciar()}>
-              Vaciar carrito
-            </button>
+            {confirmar ? (
+              <span className="confirm" role="group" aria-label="Confirmar vaciar carrito">
+                ¿Vaciar todo?
+                <button className="linkbtn" onClick={() => vaciar()}>
+                  Sí, vaciar
+                </button>
+                <button className="linkbtn" onClick={() => setConfirmar(false)} autoFocus>
+                  No
+                </button>
+              </span>
+            ) : (
+              <button className="linkbtn" onClick={() => setConfirmar(true)}>
+                Vaciar carrito
+              </button>
+            )}
           </div>
+
+          {extras.length > 0 && (
+            <div className="extras">
+              <h2>¿Le sumas algo?</h2>
+              <ul>
+                {extras.map((p) => (
+                  <li key={p.id}>
+                    <ProductImage p={p} sizes="64px" className="extras__img" />
+                    <Link to={`/chocolates/${p.id}`}>
+                      <strong>{p.nombre}</strong>
+                      <span>
+                        {usd(p.precio)} · {p.peso}
+                      </span>
+                    </Link>
+                    <AddToCart p={p} variant="compact" />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         <form className="receipt" onSubmit={pedir} noValidate>
@@ -122,7 +196,7 @@ export default function Carrito() {
             <div className="options options--row">
               <label className="option">
                 <input type="radio" name="entrega" checked={entrega === 'domicilio'} onChange={() => setEntrega('domicilio')} />
-                <span>A domicilio · {usd(ENVIO)}</span>
+                <span>A domicilio · {falta > 0 ? usd(ENVIO) : 'gratis'}</span>
               </label>
               <label className="option">
                 <input type="radio" name="entrega" checked={entrega === 'retiro'} onChange={() => setEntrega('retiro')} />

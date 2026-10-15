@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'motion/react'
 import Mascot from '../components/Mascot'
-import ProductArt from '../components/ProductArt'
+import ProductImage from '../components/ProductImage'
+import AddToCart from '../components/AddToCart'
 import useReveal from '../components/useReveal'
-import { useCart } from '../context/CartContext'
+import { spring } from '../components/anim'
 import { PRODUCTOS } from '../data/products'
 import { usd, waLink } from '../config'
 
@@ -54,7 +56,6 @@ function puntuar(p, r) {
 }
 
 function Recomendador() {
-  const { agregar } = useCart()
   const [r, setR] = useState({})
   const completo = PREGUNTAS.every((p) => r[p.id])
   const top = completo
@@ -102,33 +103,42 @@ function Recomendador() {
               </p>
             </div>
           ) : (
-            <div className="match pop" key={top[0].id}>
+            <motion.div
+              className="match"
+              key={top[0].id}
+              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={spring}
+            >
               <p className="match__kicker">Tu chocolate es</p>
               <div className="match__main">
-                <ProductArt p={top[0]} />
+                <Link to={`/chocolates/${top[0].id}`} className="match__img" tabIndex={-1} aria-hidden="true">
+                  <ProductImage p={top[0]} sizes="(max-width: 560px) 40vw, 200px" />
+                </Link>
                 <div>
-                  <h3>{top[0].nombre}</h3>
+                  <h3>
+                    <Link to={`/chocolates/${top[0].id}`}>{top[0].nombre}</Link>
+                  </h3>
                   <p>{top[0].desc}</p>
-                  <p className="match__notes">{top[0].notas}</p>
-                  <button className="btn" onClick={() => agregar(top[0].id)}>
-                    Añadir · {usd(top[0].precio)}
-                  </button>
+                  <p className="match__notes">
+                    {top[0].notas} · {usd(top[0].precio)}
+                  </p>
                 </div>
               </div>
+              <AddToCart p={top[0]} />
               <p className="match__also">También te pueden gustar:</p>
               <ul className="match__alts">
                 {top.slice(1).map((p) => (
                   <li key={p.id}>
-                    <span>
+                    <ProductImage p={p} sizes="56px" className="match__thumb" />
+                    <Link to={`/chocolates/${p.id}`}>
                       {p.nombre} · {usd(p.precio)}
-                    </span>
-                    <button className="linkbtn" onClick={() => agregar(p.id)} aria-label={`Añadir ${p.nombre}`}>
-                      Añadir
-                    </button>
+                    </Link>
+                    <AddToCart p={p} variant="compact" />
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>

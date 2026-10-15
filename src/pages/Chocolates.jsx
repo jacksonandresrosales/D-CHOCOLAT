@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import ProductArt from '../components/ProductArt'
+import ProductCard from '../components/ProductCard'
 import useReveal from '../components/useReveal'
-import { useCart } from '../context/CartContext'
 import { CATEGORIAS, PRODUCTOS } from '../data/products'
-import { usd } from '../config'
 
 const ORDEN = {
   destacados: { label: 'Destacados', fn: () => 0 },
@@ -14,7 +12,6 @@ const ORDEN = {
 }
 
 export default function Chocolates() {
-  const { agregar, lineas } = useCart()
   const [params, setParams] = useSearchParams()
   const cat = params.get('cat') || 'todos'
   const [orden, setOrden] = useState('destacados')
@@ -24,7 +21,6 @@ export default function Chocolates() {
     [cat, orden],
   )
   useReveal([cat, orden])
-  const enCarrito = (id) => lineas.find((l) => l.producto.id === id)?.qty || 0
 
   return (
     <div className="page">
@@ -62,30 +58,9 @@ export default function Chocolates() {
       </p>
 
       <ul className="shelf">
-        {lista.map((p) => {
-          const q = enCarrito(p.id)
-          return (
-            <li key={p.id} className="item" data-reveal>
-              <div className={`item__plate item__plate--${p.wrap === 'red' ? 'yellow' : p.wrap === 'yellow' ? 'red' : 'yellow'}`}>
-                <ProductArt p={p} />
-              </div>
-              <div className="item__body">
-                <div className="item__title">
-                  <h2>{p.nombre}</h2>
-                  <span className="item__price">{usd(p.precio)}</span>
-                </div>
-                <p className="item__meta">
-                  {p.notas} · {p.peso}
-                </p>
-                <p>{p.desc}</p>
-                <p className="item__origin">Origen: {p.origen}</p>
-                <button className="btn btn--block" onClick={() => agregar(p.id)}>
-                  {q ? `Añadir otro (${q} en el carrito)` : 'Añadir al carrito'}
-                </button>
-              </div>
-            </li>
-          )
-        })}
+        {lista.map((p) => (
+          <ProductCard key={p.id} p={p} sizes="(max-width: 560px) 46vw, (max-width: 1200px) 45vw, 320px" />
+        ))}
       </ul>
     </div>
   )

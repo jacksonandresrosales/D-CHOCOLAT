@@ -5,10 +5,10 @@ La mascota, **Cacaíto**, es una tableta de chocolate con estilo de dibujo anima
 
 ## Páginas
 
-- **Inicio**: portada, selector de intensidad de cacao, proceso "del árbol a la tableta" y la carta con precios.
-- **Chocolates**: catálogo con filtros y orden.
+- **Inicio**: portada animada, "La cinta del taller" (los chocolates avanzan mientras bajas), selector de intensidad de cacao, el proceso como un recibo que se imprime con el scroll y la carta con precios.
+- **Chocolates**: catálogo con filtros y orden; cada producto tiene su ficha (`/chocolates/:id`).
 - **Sugerencias**: test de 3 preguntas que recomienda un chocolate y buzón de sugerencias.
-- **Carrito**: cantidades, entrega y envío del pedido por WhatsApp.
+- **Carrito**: cantidades, envío gratis desde $25, sugerencias para completar el pedido y envío del pedido por WhatsApp.
 
 ## Cómo correrlo
 
@@ -21,9 +21,14 @@ Para producción: `npm run build` (genera la carpeta `dist/`).
 
 ## Configuración
 
-- Número de WhatsApp y costo de envío: `src/config.js`
-- Productos y precios: `src/data/products.js`
+- Número de WhatsApp, costo de envío y monto para envío gratis: `src/config.js`
+- Productos, precios y fotos: `src/data/products.js`
 
-## Fotografías
+## Animaciones y accesibilidad
 
-Las fotos de cacao son de Wikimedia Commons, con licencias libres. Los créditos están en el pie de la página y en `src/data/credits.json`.
+Las animaciones usan [Motion](https://motion.dev). Si el sistema tiene activado "reducir movimiento", se desactivan y la cinta del taller pasa a ser una fila que se desliza con el dedo.
+
+## Imágenes
+
+- Fotos de producto (`public/img/productos`): imágenes referenciales generadas con IA.
+- Fotos de cacao: Wikimedia Commons, con licencias libres. Los créditos están en la página `/creditos`.

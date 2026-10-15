@@ -61,9 +61,11 @@ export function CartProvider({ children }) {
       cantidad,
       subtotal,
       toast,
-      agregar: (id, qty = 1) => {
+      qtyDe: (id) => items[id] || 0,
+      // avisar: muestra el aviso "ya está en tu carrito" (solo al añadir por primera vez)
+      agregar: (id, qty = 1, { avisar = true } = {}) => {
         dispatch({ type: 'add', id, qty })
-        setToast({ id, key: Date.now() })
+        if (avisar) setToast({ id, key: Date.now() })
       },
       fijar: (id, qty) => dispatch({ type: 'set', id, qty }),
       vaciar: () => dispatch({ type: 'clear' }),
